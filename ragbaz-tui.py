@@ -28,6 +28,8 @@ import tomllib
 from dataclasses import dataclass, field
 
 HERE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from runtime_status import runtime_lines
 DESIGN = pathlib.Path(os.environ.get("RAGBAZ_DESIGN_SYSTEM", HERE.parent / "design-system"))
 if not (DESIGN / "tokens.toml").exists():
     DESIGN = HERE.parent / "design-system"
@@ -120,6 +122,9 @@ BINDINGS: list[Key] = [
     Key("tui.select", ("k", "up"), "previous entry", "tuis", "nav"),
     Key("tui.launch", ("enter", "l"), "start the selected TUI", "tuis", "nav"),
     Key("tui.details", ("d",), "more about the selected entry", "tuis", "view"),
+    Key("runtime", ("s",), "runtime / URLs / signing", GLOBAL, "global"),
+    Key("runtime.down", ("j", "down"), "scroll down", "runtime", "nav"),
+    Key("runtime.up", ("k", "up"), "scroll up", "runtime", "nav"),
     Key("modal.confirm", ("y",), "confirm", GLOBAL, "field"),
     Key("modal.cancel", ("n", "escape"), "cancel", GLOBAL, "field"),
 ]
@@ -136,6 +141,9 @@ class State:
     modal: str | None = None      # None | "unavailable" | "nonzero-exit"
     editing: bool = False
     status: str = ""
+    runtime: bool = False
+    runtime_content: list[str] = field(default_factory=list)
+    runtime_offset: int = 0
 
     def live(self) -> list[Key]:
         live = [k for k in BINDINGS if k.view in (self.view, GLOBAL)]
@@ -161,7 +169,7 @@ class State:
 
     @property
     def view(self) -> str:
-        return "tuis"
+        return "runtime" if self.runtime else "tuis"
 
     def clamp(self) -> None:
         self.index = max(0, min(self.index, len(self.entries) - 1))
@@ -355,6 +363,17 @@ def draw(stdscr, painter: Painter, state: State) -> None:
         f" {available}/{len(state.entries)} available", state.status)
 
     sel = state.entries[state.index] if state.entries else None
+    if state.runtime:
+        import textwrap
+        lines = [chunk for line in state.runtime_content
+                 for chunk in (textwrap.wrap(line, max(1, r.main.w)) or [""])]
+        state.runtime_offset = min(state.runtime_offset, max(0, len(lines) - r.main.h))
+        for i, line in enumerate(lines[state.runtime_offset:state.runtime_offset + r.main.h]):
+            painter.put(r.main.y + i, r.main.x, line, "ink.body", width=r.main.w)
+        hints = "  ".join(f"{k.keys[0]} {k.help}" for k in state.live() if k.scope in ("global", "nav"))
+        painter.put(r.legend.y, r.legend.x, hints, "ink.faint", width=r.legend.w)
+        stdscr.refresh()
+        return
 
     def put(y: int, x: int, text: str, role: str = "ink.body", *mods, width=None) -> None:
         painter.put(y, x, text, role, *mods, width=width)
@@ -436,6 +455,7 @@ def plain_list(entries: list[Entry]) -> int:
         mark = "ok  " if e.available else "--  "
         print(f"{mark}{e.title:<14} {e.kind:<9} {e.subtitle}")
         print(f"    status: {e.why}   docs: {e.docs}")
+    print("\n".join(runtime_lines()))
     return 0
 
 
@@ -465,7 +485,15 @@ def run(stdscr) -> int:
 
         if name == "quit":
             return 0
-        if name == "tui.select" and "down" in action.keys:
+        if name == "runtime":
+            state.runtime = not state.runtime
+            state.runtime_content = runtime_lines()
+            state.runtime_offset = 0
+        elif name == "runtime.down":
+            state.runtime_offset += 1
+        elif name == "runtime.up":
+            state.runtime_offset = max(0, state.runtime_offset - 1)
+        elif name == "tui.select" and "down" in action.keys:
             state.index += 1
         elif name == "tui.select":
             state.index -= 1
@@ -481,6 +509,7 @@ def run(stdscr) -> int:
                 state.modal = "unavailable"
         elif name == "refresh":
             state.entries = load_entries()
+            state.runtime_content = runtime_lines()
             state.status = "re-probed"
 
 

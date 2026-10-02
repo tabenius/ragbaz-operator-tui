@@ -1,0 +1,70 @@
+# Fleet TUIs this hub can start.
+#
+# Probed at startup, not assumed: `available` is the result of running the entry
+# point, so a TUI whose binary was never built shows as unavailable rather than
+# failing when you try to launch it.
+schema = "ragbaz.tui-registry/1"
+
+[[tui]]
+id = "frog"
+title = "Frog"
+subtitle = "workspace coordination: tasks, locks, repos"
+command = ["frog", "tui"]
+probe = ["frog", "--help"]
+kind = "curses"
+project = "frog"
+docs = "frog/AGENTS.md"
+
+[[tui]]
+id = "weftmark"
+title = "WeftMark"
+subtitle = "change sets, evidence, review, handoff"
+command = ["weftmark-tui"]
+probe = ["weftmark-tui", "--help"]
+kind = "textual"
+project = "weftmark"
+docs = "weftmark/AGENTS.md"
+
+[[tui]]
+id = "nostoi"
+title = "Nostoi"
+subtitle = "browse an audit chain; follow it live"
+command = ["nostoi", "tui"]
+probe = ["nostoi", "--help"]
+kind = "ratatui"
+project = "nostoi"
+requires_build = true
+docs = "nostoi/docs/"
+
+[[tui]]
+id = "minotaur"
+title = "Minotaur"
+subtitle = "host integrity graph: config check, one-shot check, serve"
+command = ["minotaur", "serve"]
+probe = ["minotaur", "config", "--help"]
+kind = "cli"
+project = "ragbaz-minotaur"
+requires_build = true
+docs = "ragbaz-minotaur/README.md"
+
+[[tui]]
+id = "design-tokens"
+title = "Design system"
+subtitle = "resolved palette, colour ladder, paginated legend"
+command = ["python3", "examples/tokens.py"]
+probe = ["python3", "-c", "import tomllib,pathlib;tomllib.loads(pathlib.Path('tokens.toml').read_text())"]
+kind = "ansi"
+project = "design-system"
+cwd_from = "design-system"
+docs = "design-system/README.md"
+
+[[tui]]
+id = "design-legend"
+title = "Design legend"
+subtitle = "the binding table and its paginated legend"
+command = ["python3", "examples/legend.py"]
+probe = ["python3", "-c", "import tomllib,pathlib;tomllib.loads(pathlib.Path('tokens.toml').read_text())"]
+kind = "ansi"
+project = "design-system"
+cwd_from = "design-system"
+docs = "design-system/docs/layout.md"

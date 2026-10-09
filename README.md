@@ -15,7 +15,7 @@ so it doubles as the worked example the other surfaces will follow.
 ## Why it exists
 
 Four unrelated terminal style systems existed here before
-[`../design-system`](../design-system). This surface provides the six behaviours a
+[`tabenius/design-system`](https://github.com/tabenius/design-system). This surface provides the six behaviours a
 conformant renderer provides, in curses, without asking curses to be anything it
 is not:
 
@@ -31,7 +31,7 @@ truncate(text, width) -> str          escape- and width-safe
 It reads the token and theme files rather than holding any values of its own, and
 it imports the design system's reference colour ladder instead of re-deriving
 nearest-256 — both required by
-[`ragbaz-renderer-adapter`](../design-system/skills/ragbaz-renderer-adapter/SKILL.md).
+[`ragbaz-renderer-adapter`](https://github.com/tabenius/design-system/blob/main/skills/ragbaz-renderer-adapter/SKILL.md).
 
 ## Entries are probed, not assumed
 
@@ -85,7 +85,7 @@ captured stream cannot be reassembled into a frame.
 
 Same four layers as the rest of the fleet — defaults, then a TOML file, then
 environment, then CLI — resolved through
-[`../design-system/docs/configuration.md`](../design-system/docs/configuration.md).
+[`design-system/docs/configuration.md`](https://github.com/tabenius/design-system/blob/main/docs/configuration.md).
 `RAGBAZ_NERD_FONT=1` opts into Nerd Font glyphs; `RAGBAZ_DESIGN_SYSTEM` points at
 the token files if they are not a sibling of this repository. `NO_COLOR` and
 `TERM=dumb` are honoured, and `--list` is the no-TTY path.
